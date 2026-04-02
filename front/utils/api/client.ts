@@ -1,12 +1,17 @@
 import type { API } from "@/hl-common/api/API";
-import { Routes } from "@/hl-common/api/routes";
+import { type Req, Routes } from "@/hl-common/api/routes";
 
 import { publicHavenUrl } from "@/utils/env";
 
 import { ApiError, isHavenError, replaceParams } from "./fetchUtils";
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1500;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const _request = async (
-  req: { method: string; path: string },
+  req: Req,
   args?: {
     params?: Record<string, any>;
     query?: Record<string, any>;
@@ -31,28 +36,35 @@ const _request = async (
   }
 
   const fullUrl = `${publicHavenUrl}/api${url}`;
+  const attempts = req.canRetry ? MAX_RETRIES : 1;
 
-  try {
-    const response = await fetch(fullUrl, {
-      method: req.method,
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Requested-With": "XMLHttpRequest",
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const response = await fetch(fullUrl, {
+        method: req.method,
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
 
-    const result = await response.json();
+      const result = await response.json();
 
-    if (isHavenError(result)) {
-      throw new ApiError(result.message || "Unknown error", result.statusCode);
+      if (isHavenError(result)) {
+        throw new ApiError(result.message || "Unknown error", result.statusCode);
+      }
+
+      return result;
+    } catch (error) {
+      const isLast = attempt === attempts;
+      if (isLast) {
+        console.error(`API request failed: ${req.method} ${url}`, error);
+        return null;
+      }
+      await sleep(RETRY_DELAY_MS);
     }
-
-    return result;
-  } catch (error) {
-    console.error(`API request failed: ${req.method} ${url}`, error);
-    return null;
   }
 };
 
