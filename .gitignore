@@ -1,0 +1,20 @@
+.env
+node_modules/
+haven/node_modules/
+front/node_modules/
+front/.next/
+haven/dist/
+*.js.map
+
+# Yarn v2, without zero-installs
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# TypeScript / Next.js generated files
+*.tsbuildinfo
+**/next-env.d.ts

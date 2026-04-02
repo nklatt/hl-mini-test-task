@@ -1,0 +1,56 @@
+services:
+  haven:
+    env_file: .env
+    build:
+      context: haven
+      target: dev
+    volumes:
+      - ./haven:/root/haven
+    hostname: haven.hl.local
+    ports:
+      - "2337:2337"
+    depends_on:
+      - postgres
+    networks:
+      - hl
+
+  front:
+    env_file: .env
+    build:
+      context: front
+      additional_contexts:
+        hl_common: haven/src/hl-common
+        prisma: haven/prisma
+      target: dev
+    volumes:
+      - ./haven/src/hl-common:/root/haven/src/hl-common
+      - ./haven/prisma:/root/haven/prisma
+      - ./front:/root/front
+    hostname: front.hl.local
+    ports:
+      - "3000:3000"
+    networks:
+      - hl
+
+  postgres:
+    image: postgres:14.9
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - mini-data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    networks:
+      - hl
+
+volumes:
+  mini-data:
+
+networks:
+  hl:
+    name: mini-hl
+    driver: bridge

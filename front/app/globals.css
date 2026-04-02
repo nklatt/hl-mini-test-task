@@ -1,0 +1,11 @@
+/* biome-ignore lint/suspicious/noUnknownAtRules: tailwind directive */
+@tailwind base;
+/* biome-ignore lint/suspicious/noUnknownAtRules: tailwind directive */
+@tailwind components;
+/* biome-ignore lint/suspicious/noUnknownAtRules: tailwind directive */
+@tailwind utilities;
+
+html,
+body {
+  background-color: #fafafa;
+}

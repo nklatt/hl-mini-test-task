@@ -1,0 +1,23 @@
+{
+  "name": "mini",
+  "description": "Mini HealthLearn application",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "yarn@3.6.3",
+  "scripts": {
+    "start": "docker compose up",
+    "stop": "docker compose down",
+    "logs:haven": "docker compose logs -f --tail=50 haven",
+    "logs:front": "docker compose logs -f --tail=50 front",
+    "haven": "docker compose exec haven yarn",
+    "front": "docker compose exec front yarn",
+    "format": "yarn biome check --write .",
+    "migrate": "docker compose exec haven yarn prisma migrate",
+    "prisma-generate": "./scripts/prisma-generate.sh",
+    "seed": "docker compose exec haven sh -c 'yarn prisma migrate deploy && yarn prisma db seed'",
+    "psql": "docker compose exec postgres psql -U postgres"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.2.4"
+  }
+}

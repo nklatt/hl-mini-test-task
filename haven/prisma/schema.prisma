@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum role {
+  registered
+  admin
+}
+
+enum card_interaction_type {
+  radio
+  next
+}
+
+model users {
+  id         Int      @id @default(autoincrement())
+  phone      String   @unique
+  first      String?
+  last       String?
+  role       role     @default(registered)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  auth_challenges         auth_challenges?
+  card_submit_events      card_submit_events[]
+  module_begin_events     module_begin_events[]
+  module_complete_events  module_complete_events[]
+  course_complete_events  course_complete_events[]
+}
+
+model auth_challenges {
+  id         Int      @id @default(autoincrement())
+  otp        String
+  expires_at DateTime
+  user_id    Int      @unique
+  created_at DateTime @default(now())
+
+  user users @relation(fields: [user_id], references: [id])
+}
+
+model courses {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  modules                modules[]
+  course_complete_events course_complete_events[]
+}
+
+model modules {
+  id         Int      @id @default(autoincrement())
+  title      String
+  order      Float
+  course_id  Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  course                 courses                  @relation(fields: [course_id], references: [id])
+  cards                  cards[]
+  card_submit_events     card_submit_events[]
+  module_begin_events    module_begin_events[]
+  module_complete_events module_complete_events[]
+}
+
+model cards {
+  id               Int                  @id @default(autoincrement())
+  title            String
+  body             String               @default("")
+  interaction_type card_interaction_type
+  options          Json?
+  order            Float
+  module_id        Int
+  created_at       DateTime             @default(now())
+  updated_at       DateTime             @updatedAt
+
+  module             modules              @relation(fields: [module_id], references: [id])
+  card_submit_events card_submit_events[]
+}
+
+model card_submit_events {
+  id         Int      @id @default(autoincrement())
+  uuid       String   @unique
+  answer     Json?
+  correct    Boolean
+  skip       Boolean
+  retryable  Boolean
+  duration   Float
+  timestamp  DateTime @db.Timestamp(6)
+  created_at DateTime @default(now())
+  card_id    Int
+  module_id  Int
+  course_id  Int
+  user_id    Int
+
+  card   cards   @relation(fields: [card_id], references: [id])
+  module modules @relation(fields: [module_id], references: [id])
+  user   users   @relation(fields: [user_id], references: [id])
+
+  @@index([user_id, course_id, module_id])
+}
+
+model module_begin_events {
+  id         Int      @id @default(autoincrement())
+  uuid       String   @unique
+  timestamp  DateTime @db.Timestamp(6)
+  created_at DateTime @default(now())
+  module_id  Int
+  course_id  Int
+  user_id    Int
+
+  module modules @relation(fields: [module_id], references: [id])
+  user   users   @relation(fields: [user_id], references: [id])
+}
+
+model module_complete_events {
+  id         Int      @id @default(autoincrement())
+  uuid       String   @unique
+  timestamp  DateTime @db.Timestamp(6)
+  created_at DateTime @default(now())
+  module_id  Int
+  course_id  Int
+  user_id    Int
+
+  module modules @relation(fields: [module_id], references: [id])
+  user   users   @relation(fields: [user_id], references: [id])
+}
+
+model course_complete_events {
+  id         Int      @id @default(autoincrement())
+  uuid       String   @unique
+  timestamp  DateTime @db.Timestamp(6)
+  created_at DateTime @default(now())
+  course_id  Int
+  user_id    Int
+
+  course courses @relation(fields: [course_id], references: [id])
+  user   users   @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, course_id])
+}
