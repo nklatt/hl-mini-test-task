@@ -32,9 +32,9 @@ export class ModulesController {
   @Route(RequiresPrivilege(role.admin))
   async createModule(
     @Param("courseId", ParseIntPipe) courseId: number,
-    @Body() { title, order }: API.createModule.body,
+    @Body() { title }: API.createModule.body,
   ): API.createModule.resp {
-    const module = await this.modulesService.create(courseId, title, order);
+    const module = await this.modulesService.create(courseId, title);
     return new ApiRes(ModuleEntity.fromPrisma(module));
   }
 

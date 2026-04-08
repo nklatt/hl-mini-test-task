@@ -1,47 +1,48 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { use } from "react";
 
 import Form from "@/components/forms/Form";
 import Input from "@/components/forms/Input";
+import TextArea from "@/components/forms/TextArea";
 import { H2 } from "@/components/Headings";
 import Panel from "@/components/Panel";
-import { createModule } from "@/utils/api/client";
-import idOrNotFound from "@/utils/api/idOrNotFound";
+import { updateCourse } from "@/utils/api/client";
 import { useForm } from "@/utils/useForm";
 import { useRequest } from "@/utils/useRequest";
 
-export default function AdminCreateModulePage(props: {
-  params: Promise<{ course_id: string }>;
+export default function EditCourseForm({
+  courseId,
+  current,
+}: {
+  courseId: number;
+  current: { title: string; description: string };
 }) {
-  const params = use(props.params);
-  const courseId = idOrNotFound(params.course_id);
   const router = useRouter();
   const { loading, error, run } = useRequest();
 
   const { fields, handleInputChange, handleSubmit } = useForm(
-    { title: "" },
+    { title: current.title, description: current.description },
     (data) => {
       run(
-        createModule({
+        updateCourse({
           params: { courseId },
-          body: { title: data.title },
+          body: { title: data.title, description: data.description },
         }),
-        () => router.push(`/admin/courses/${courseId}/modules`),
+        () => router.push("/admin/courses"),
       );
     },
   );
 
   return (
     <div>
-      <H2 className="mb-6">New Module</H2>
+      <H2 className="mb-6">Edit Course</H2>
       <Panel>
         <Form
           onSubmit={handleSubmit}
           loading={loading}
           error={error}
-          submit={{ children: "Create Module" }}
+          submit={{ children: "Save Changes" }}
         >
           <Input
             name="title"
@@ -49,7 +50,13 @@ export default function AdminCreateModulePage(props: {
             value={fields.title}
             onChange={handleInputChange}
             required
-            placeholder="Module title"
+          />
+          <TextArea
+            name="description"
+            label="Description"
+            value={fields.description}
+            onChange={handleInputChange}
+            rows={3}
           />
         </Form>
       </Panel>

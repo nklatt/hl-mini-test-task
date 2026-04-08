@@ -33,9 +33,14 @@ export class CardsService {
       body: string;
       interaction_type: string;
       options?: RadioOption[];
-      order: number;
     },
   ) {
+    const last = await this.prismaService.cards.findFirst({
+      where: { module_id: moduleId },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    });
+    const order = (last?.order ?? 0) + 1;
     return this.prismaService.cards.create({
       data: {
         title: data.title,
@@ -44,7 +49,7 @@ export class CardsService {
         options: data.options
           ? (data.options as unknown as Prisma.JsonArray)
           : Prisma.JsonNull,
-        order: data.order,
+        order,
         module_id: moduleId,
       },
     });
@@ -54,7 +59,7 @@ export class CardsService {
     courseId: number,
     moduleId: number,
     cardId: number,
-    data: {
+    incoming: {
       title?: string;
       body?: string;
       interaction_type?: string;
@@ -62,23 +67,31 @@ export class CardsService {
       order?: number;
     },
   ) {
+    const current = await this.prismaService.cards.findUniqueOrThrow({
+      where: { id: cardId, module_id: moduleId, module: { course_id: courseId } },
+    });
+    const data: Prisma.cardsUpdateInput = {};
+    if (incoming.title !== undefined && incoming.title !== current.title)
+      data.title = incoming.title;
+    if (incoming.body !== undefined && incoming.body !== current.body)
+      data.body = incoming.body;
+    if (
+      incoming.interaction_type !== undefined &&
+      incoming.interaction_type !== current.interaction_type
+    )
+      data.interaction_type = incoming.interaction_type as any;
+    if (incoming.options !== undefined) {
+      const incomingJson = JSON.stringify(incoming.options);
+      const currentJson = JSON.stringify(current.options);
+      if (incomingJson !== currentJson)
+        data.options = incoming.options as unknown as Prisma.JsonArray;
+    }
+    if (incoming.order !== undefined && incoming.order !== current.order)
+      data.order = incoming.order;
+    if (Object.keys(data).length === 0) return current;
     return this.prismaService.cards.update({
-      where: {
-        id: cardId,
-        module_id: moduleId,
-        module: { course_id: courseId },
-      },
-      data: {
-        ...(data.title !== undefined ? { title: data.title } : {}),
-        ...(data.body !== undefined ? { body: data.body } : {}),
-        ...(data.interaction_type !== undefined
-          ? { interaction_type: data.interaction_type as any }
-          : {}),
-        ...(data.options !== undefined
-          ? { options: data.options as unknown as Prisma.JsonArray }
-          : {}),
-        ...(data.order !== undefined ? { order: data.order } : {}),
-      },
+      where: { id: cardId, module_id: moduleId, module: { course_id: courseId } },
+      data,
     });
   }
 

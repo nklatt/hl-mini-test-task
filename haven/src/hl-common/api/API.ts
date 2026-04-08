@@ -81,7 +81,7 @@ export namespace API {
 
   export namespace createModule {
     export type params = { courseId: number };
-    export type body = { title: string; order: number };
+    export type body = { title: string };
     export type resp = Promise<ApiRes<ModuleEntity>>;
     export type func = (args: { params: params; body: body }) => resp;
   }

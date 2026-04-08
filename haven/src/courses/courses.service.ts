@@ -35,12 +35,17 @@ export class CoursesService {
   }
 
   async update(courseId: number, title?: string, description?: string) {
+    const current = await this.prismaService.courses.findUniqueOrThrow({
+      where: { id: courseId },
+    });
+    const data: { title?: string; description?: string } = {};
+    if (title !== undefined && title !== current.title) data.title = title;
+    if (description !== undefined && description !== current.description)
+      data.description = description;
+    if (Object.keys(data).length === 0) return current;
     return this.prismaService.courses.update({
       where: { id: courseId },
-      data: {
-        ...(title !== undefined ? { title } : {}),
-        ...(description !== undefined ? { description } : {}),
-      },
+      data,
     });
   }
 }

@@ -22,7 +22,13 @@ export class ModulesService {
     });
   }
 
-  async create(courseId: number, title: string, order: number) {
+  async create(courseId: number, title: string) {
+    const last = await this.prismaService.modules.findFirst({
+      where: { course_id: courseId },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    });
+    const order = (last?.order ?? 0) + 1;
     return this.prismaService.modules.create({
       data: { title, order, course_id: courseId },
     });
@@ -34,12 +40,16 @@ export class ModulesService {
     title?: string,
     order?: number,
   ) {
+    const current = await this.prismaService.modules.findUniqueOrThrow({
+      where: { id: moduleId, course_id: courseId },
+    });
+    const data: { title?: string; order?: number } = {};
+    if (title !== undefined && title !== current.title) data.title = title;
+    if (order !== undefined && order !== current.order) data.order = order;
+    if (Object.keys(data).length === 0) return current;
     return this.prismaService.modules.update({
       where: { id: moduleId, course_id: courseId },
-      data: {
-        ...(title !== undefined ? { title } : {}),
-        ...(order !== undefined ? { order } : {}),
-      },
+      data,
     });
   }
 
