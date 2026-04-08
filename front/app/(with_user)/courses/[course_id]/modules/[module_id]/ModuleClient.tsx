@@ -148,7 +148,7 @@ export default function ModuleClient({ module, courseId, userId }: Props) {
   }
 
   return (
-    <div>
+    <div key={currentCard.id}>
       <H2 className="mb-1">{module.title}</H2>
       <p className="text-sm text-gray-500 mb-6">
         Card {currentCardIndex + 1} of {cards.length}
