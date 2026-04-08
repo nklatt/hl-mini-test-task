@@ -40,12 +40,16 @@ export class ModulesService {
     title?: string,
     order?: number,
   ) {
+    const current = await this.prismaService.modules.findUniqueOrThrow({
+      where: { id: moduleId, course_id: courseId },
+    });
+    const data: { title?: string; order?: number } = {};
+    if (title !== undefined && title !== current.title) data.title = title;
+    if (order !== undefined && order !== current.order) data.order = order;
+    if (Object.keys(data).length === 0) return current;
     return this.prismaService.modules.update({
       where: { id: moduleId, course_id: courseId },
-      data: {
-        ...(title !== undefined ? { title } : {}),
-        ...(order !== undefined ? { order } : {}),
-      },
+      data,
     });
   }
 
