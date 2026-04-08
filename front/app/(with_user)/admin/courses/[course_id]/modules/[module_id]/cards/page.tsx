@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { ButtonLink } from "@/components/ButtonLink";
 import { H2 } from "@/components/Headings";
 import Panel from "@/components/Panel";
@@ -11,14 +13,15 @@ export default async function AdminCardsPage(props: {
   const courseId = idOrNotFound(params.course_id);
   const moduleId = idOrNotFound(params.module_id);
 
-  const { data: cards } = await serverSide.getCards({
-    params: { courseId, moduleId },
-  });
+  const [{ data: module }, { data: cards }] = await Promise.all([
+    serverSide.getModule({ params: { courseId, moduleId } }),
+    serverSide.getCards({ params: { courseId, moduleId } }),
+  ]);
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <H2>Cards</H2>
+        <H2>{module.title} · Cards</H2>
         <div className="flex gap-2">
           <ButtonLink
             href={`/admin/courses/${courseId}/modules`}
@@ -69,4 +72,14 @@ export default async function AdminCardsPage(props: {
       </div>
     </div>
   );
+}
+
+export async function generateMetadata(props: {
+  params: Promise<{ course_id: string; module_id: string }>;
+}): Promise<Metadata> {
+  const params = await props.params;
+  const courseId = idOrNotFound(params.course_id);
+  const moduleId = idOrNotFound(params.module_id);
+  const { data: module } = await serverSide.getModule({ params: { courseId, moduleId } });
+  return { title: `${module.title}: Cards` };
 }

@@ -1,8 +1,19 @@
+import type { Metadata } from "next";
+
 import { ButtonLink } from "@/components/ButtonLink";
 import { H2 } from "@/components/Headings";
 import Panel from "@/components/Panel";
 import idOrNotFound from "@/utils/api/idOrNotFound";
 import { serverSide } from "@/utils/api/server";
+
+export async function generateMetadata(props: {
+  params: Promise<{ course_id: string }>;
+}): Promise<Metadata> {
+  const params = await props.params;
+  const courseId = idOrNotFound(params.course_id);
+  const { data: course } = await serverSide.getCourse({ params: { courseId } });
+  return { title: course.title };
+}
 
 export default async function CoursePage(props: {
   params: Promise<{ course_id: string }>;

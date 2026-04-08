@@ -1,7 +1,11 @@
+import type { Metadata } from "next";
+
 import { ButtonLink } from "@/components/ButtonLink";
 import { H2 } from "@/components/Headings";
 import Panel from "@/components/Panel";
 import { serverSide } from "@/utils/api/server";
+
+export const metadata: Metadata = { title: "Courses" };
 
 export default async function AdminCoursesPage() {
   const { data: courses } = await serverSide.getCourses();

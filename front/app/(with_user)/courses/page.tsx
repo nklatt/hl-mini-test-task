@@ -1,4 +1,8 @@
+import type { Metadata } from "next";
+
 import { ButtonLink } from "@/components/ButtonLink";
+
+export const metadata: Metadata = { title: "Courses" };
 import { H2 } from "@/components/Headings";
 import Panel from "@/components/Panel";
 import { serverSide } from "@/utils/api/server";

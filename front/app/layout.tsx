@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Mini HealthLearn",
+  title: {
+    template: "%s · Mini HealthLearn",
+    default: "Mini HealthLearn",
+  },
   description: "Community health learning platform",
 };
 
