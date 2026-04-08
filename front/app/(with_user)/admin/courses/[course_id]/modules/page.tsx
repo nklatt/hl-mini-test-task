@@ -20,12 +20,12 @@ export default async function AdminModulesPage(props: {
         <H2>Modules</H2>
         <div className="flex gap-2">
           <ButtonLink
-            href={`/admin/courses/${courseId}/edit`}
+            href="/admin/courses"
             medium
             inline
             secondary
           >
-            ← Course
+            ← Courses
           </ButtonLink>
           <ButtonLink
             href={`/admin/courses/${courseId}/modules/create`}
