@@ -33,9 +33,14 @@ export class CardsService {
       body: string;
       interaction_type: string;
       options?: RadioOption[];
-      order: number;
     },
   ) {
+    const last = await this.prismaService.cards.findFirst({
+      where: { module_id: moduleId },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    });
+    const order = (last?.order ?? 0) + 1;
     return this.prismaService.cards.create({
       data: {
         title: data.title,
@@ -44,7 +49,7 @@ export class CardsService {
         options: data.options
           ? (data.options as unknown as Prisma.JsonArray)
           : Prisma.JsonNull,
-        order: data.order,
+        order,
         module_id: moduleId,
       },
     });

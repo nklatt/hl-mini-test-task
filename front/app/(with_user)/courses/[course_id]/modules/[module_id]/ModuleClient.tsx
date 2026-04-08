@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 import type { CardEntity } from "@/hl-common/entities/Cards";
@@ -19,21 +19,44 @@ type Props = {
   userId: number;
 };
 
+const progressKey = (userId: number, moduleId: number) =>
+  `progress-${userId}-module-${moduleId}`;
+
+const beginUuidKey = (userId: number, moduleId: number) =>
+  `begin-uuid-${userId}-module-${moduleId}`;
+
+const getOrCreateBeginUuid = (userId: number, moduleId: number): string => {
+  const key = beginUuidKey(userId, moduleId);
+  const existing = localStorage.getItem(key);
+  if (existing) return existing;
+  const uuid = uuidv4();
+  localStorage.setItem(key, uuid);
+  return uuid;
+};
+
 export default function ModuleClient({ module, courseId, userId }: Props) {
   const { cards, id: moduleId } = module;
 
-  useEffect(() => {
-    localStorage.setItem("current-user", String(userId));
-  }, [userId]);
-
   const [currentCardIndex, setCurrentCardIndex] = useState(() => {
     if (typeof window === "undefined") return 0;
-    const stored = localStorage.getItem(`progress-module-${moduleId}`);
-    return stored ? Number.parseInt(stored, 10) : 0;
+    const stored = localStorage.getItem(progressKey(userId, moduleId));
+    const parsed = stored ? Number.parseInt(stored, 10) : 0;
+    // If progress is past the end (module was completed), start from done state
+    return Math.min(parsed, cards.length);
   });
 
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const stored = localStorage.getItem(progressKey(userId, moduleId));
+    const parsed = stored ? Number.parseInt(stored, 10) : 0;
+    return parsed >= cards.length && cards.length > 0;
+  });
   const [submitting, setSubmitting] = useState(false);
+
+  // Stable UUIDs — persisted to localStorage so they survive page reloads and retries
+  const moduleBeginUuid = useState(() => getOrCreateBeginUuid(userId, moduleId))[0];
+  const moduleCompleteUuid = useState(() => uuidv4())[0];
+  const hasBegunRef = useRef(false);
 
   const currentCard = cards[currentCardIndex];
   const isFirst = currentCardIndex === 0;
@@ -43,6 +66,8 @@ export default function ModuleClient({ module, courseId, userId }: Props) {
     setSubmitting(true);
 
     const isLastCard = currentCardIndex === cards.length - 1;
+    const sendBegin = isFirst && !hasBegunRef.current;
+    if (sendBegin) hasBegunRef.current = true;
 
     await ingestEvent({
       body: {
@@ -59,8 +84,8 @@ export default function ModuleClient({ module, courseId, userId }: Props) {
         duration: 0,
         timestamp: new Date().toISOString(),
         extraEvents: {
-          ...(isFirst ? { moduleBeginUuid: uuidv4() } : {}),
-          ...(isLastCard ? { moduleCompleteUuid: uuidv4() } : {}),
+          ...(sendBegin ? { moduleBeginUuid } : {}),
+          ...(isLastCard ? { moduleCompleteUuid } : {}),
         },
       },
     });
@@ -73,8 +98,8 @@ export default function ModuleClient({ module, courseId, userId }: Props) {
     const next = currentCardIndex + 1;
     const isLastCard = currentCardIndex === cards.length - 1;
 
-    // Write progress to localStorage
-    localStorage.setItem(`progress-module-${moduleId}`, String(next));
+    // Write progress to localStorage, scoped to this user
+    localStorage.setItem(progressKey(userId, moduleId), String(next));
     setCurrentCardIndex(next);
 
     if (isLastCard) {
@@ -123,7 +148,7 @@ export default function ModuleClient({ module, courseId, userId }: Props) {
   }
 
   return (
-    <div>
+    <div key={currentCard.id}>
       <H2 className="mb-1">{module.title}</H2>
       <p className="text-sm text-gray-500 mb-6">
         Card {currentCardIndex + 1} of {cards.length}

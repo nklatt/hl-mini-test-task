@@ -22,7 +22,13 @@ export class ModulesService {
     });
   }
 
-  async create(courseId: number, title: string, order: number) {
+  async create(courseId: number, title: string) {
+    const last = await this.prismaService.modules.findFirst({
+      where: { course_id: courseId },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    });
+    const order = (last?.order ?? 0) + 1;
     return this.prismaService.modules.create({
       data: { title, order, course_id: courseId },
     });

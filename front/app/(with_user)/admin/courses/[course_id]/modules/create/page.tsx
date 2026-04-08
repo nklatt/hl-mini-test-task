@@ -21,12 +21,12 @@ export default function AdminCreateModulePage(props: {
   const { loading, error, run } = useRequest();
 
   const { fields, handleInputChange, handleSubmit } = useForm(
-    { title: "", order: "1" },
+    { title: "" },
     (data) => {
       run(
         createModule({
           params: { courseId },
-          body: { title: data.title, order: Number.parseInt(data.order, 10) },
+          body: { title: data.title },
         }),
         () => router.push(`/admin/courses/${courseId}/modules`),
       );
@@ -50,14 +50,6 @@ export default function AdminCreateModulePage(props: {
             onChange={handleInputChange}
             required
             placeholder="Module title"
-          />
-          <Input
-            name="order"
-            label="Order"
-            type="number"
-            value={fields.order}
-            onChange={handleInputChange}
-            min={1}
           />
         </Form>
       </Panel>

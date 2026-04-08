@@ -36,7 +36,6 @@ export default function AdminCreateCardPage(props: {
       title: "",
       body: "",
       interaction_type: card_interaction_type.next as card_interaction_type,
-      order: "1",
     },
     (data) => {
       const isRadio = data.interaction_type === card_interaction_type.radio;
@@ -50,7 +49,6 @@ export default function AdminCreateCardPage(props: {
             options: isRadio
               ? radioOptions.filter((o) => o.label.trim())
               : undefined,
-            order: Number.parseInt(data.order, 10),
           },
         }),
         () =>
@@ -116,15 +114,6 @@ export default function AdminCreateCardPage(props: {
               Radio (multiple choice)
             </option>
           </Select>
-          <Input
-            name="order"
-            label="Order"
-            type="number"
-            value={fields.order}
-            onChange={handleInputChange}
-            min={1}
-          />
-
           {isRadio && (
             <div className="mb-4">
               <p className="text-gray-500 text-sm mb-2">

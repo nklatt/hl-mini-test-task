@@ -74,9 +74,6 @@ export class CreateCardBody {
   @IsOptional()
   @IsArray()
   options?: RadioOption[];
-
-  @IsNumber()
-  order: number;
 }
 
 export class UpdateCardBody {
